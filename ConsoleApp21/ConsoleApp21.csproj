@@ -31,13 +31,13 @@
     <None Update="Shaders\textured.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\vertexposition.glsl">
+    <None Update="Shaders\Vertex\VertexPosition.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\vertexpositionnormal.glsl">
+    <None Update="Shaders\Vertex\VertexPositionNormal.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\vertexpositiontexcoord.glsl">
+    <None Update="Shaders\Vertex\VertexPositionTexture.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

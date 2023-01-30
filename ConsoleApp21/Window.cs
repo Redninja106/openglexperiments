@@ -6,6 +6,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Silk.NET.Maths;
 using StbImageSharp;
+using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -19,7 +20,7 @@ class Window : GameWindow
 
     Shader litShader;
     Shader lampShader;
-    int texture1, texture2;
+    int texture1, texture2, texture3;
 
     int vbo; //, ebo;
     int vao, lightVao;
@@ -110,7 +111,10 @@ class Window : GameWindow
 
         VertexPositionNormal.SetAttributes();
 
-        LoadTextures();
+        StbImage.stbi_set_flip_vertically_on_load(1);
+        texture1 = LoadTexture("Assets/container.jpg");
+        texture2 = LoadTexture("Assets/awesomeface.png");
+        texture3 = LoadTexture("Assets/container2.png");
 
         xr = 0;
         yr = MathF.PI;
@@ -168,7 +172,6 @@ class Window : GameWindow
             material.Layout();
             ImGui.PopID();
         }
-
         if (ImGui.CollapsingHeader("light"))
         {
             ImGui.PushID("light");
@@ -181,6 +184,7 @@ class Window : GameWindow
             light.ambient = lightCol * .2f;
             light.diffuse = lightCol * .5f;
         }
+
         GL.Enable(EnableCap.DepthTest);
         var viewRotMatrix = Matrix3.CreateRotationY(yr) * Matrix3.CreateRotationX(xr);
 
@@ -225,31 +229,14 @@ class Window : GameWindow
         base.OnRenderFrame(args);
     }
 
-    void LoadTextures()
+    private int LoadTexture(string path)
     {
+        var bytes = File.ReadAllBytes(path);
+        var image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlue);
 
-        StbImage.stbi_set_flip_vertically_on_load(1);
-
-        var bytes1 = File.ReadAllBytes("Assets/container.jpg");
-        var image1 = ImageResult.FromMemory(bytes1);
-
-        texture1 = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, texture1);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, image1.Width, image1.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, image1.Data);
-        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-
-        var bytes2 = File.ReadAllBytes("Assets/awesomeface.png");
-
-        var image2 = ImageResult.FromMemory(bytes2, ColorComponents.RedGreenBlue);
-
-        texture2 = GL.GenTexture();
+        var texture = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, texture2);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, image2.Width, image2.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, image2.Data);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, image.Width, image.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, image.Data);
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
@@ -257,6 +244,7 @@ class Window : GameWindow
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
+        return texture;
     }
 
     private void HandleInput(float dt)
