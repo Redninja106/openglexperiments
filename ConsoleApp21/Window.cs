@@ -8,8 +8,6 @@ using Silk.NET.Maths;
 using StbImageSharp;
 using System;
 using System.Drawing;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Transactions;
 
 namespace ConsoleApp21;
@@ -27,44 +25,44 @@ class Window : GameWindow
 
     DebugProc debugMessageCallback;
 
-    VertexPositionNormal[] vertices = new VertexPositionNormal[]
+    VertexPositionTextureNormal[] vertices = new VertexPositionTextureNormal[]
     {
-        new(new(-0.5f, -0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new( 0.5f, -0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new( 0.5f,  0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new( 0.5f,  0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new(-0.5f,  0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new(-0.5f, -0.5f, -0.5f), new( 0.0f,  0.0f, -1.0f)),
-        new(new(-0.5f, -0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new( 0.5f, -0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new(-0.5f,  0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new(-0.5f, -0.5f,  0.5f), new( 0.0f,  0.0f,  1.0f)),
-        new(new(-0.5f,  0.5f,  0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f,  0.5f, -0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f, -0.5f, -0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f, -0.5f, -0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f, -0.5f,  0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f,  0.5f,  0.5f), new(-1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f,  0.5f, -0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f, -0.5f, -0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f, -0.5f, -0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f, -0.5f,  0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 1.0f,  0.0f,  0.0f)),
-        new(new(-0.5f, -0.5f, -0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new( 0.5f, -0.5f, -0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new( 0.5f, -0.5f,  0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new( 0.5f, -0.5f,  0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new(-0.5f, -0.5f,  0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new(-0.5f, -0.5f, -0.5f), new( 0.0f, -1.0f,  0.0f)),
-        new(new(-0.5f,  0.5f, -0.5f), new( 0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0.5f, -0.5f), new( 0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0.5f,  0.5f), new( 0.0f,  1.0f,  0.0f)),
-        new(new(-0.5f,  0.5f,  0.5f), new( 0.0f,  1.0f,  0.0f)),
-        new(new(-0.5f,  0.5f, -0.5f), new( 0.0f,  1.0f,  0.0f))
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new( 0.5f, -0.5f, -0.5f),  new( 1.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new(-0.5f,  0.5f,  0.5f),  new( 0.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
+        new(new(-0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new( 0.5f, -0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new(-0.5f,  0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f))
     };
 
     Vector3[] positions = new Vector3[]
@@ -89,16 +87,16 @@ class Window : GameWindow
         debugMessageCallback = this.DebugMessage;
         GL.DebugMessageCallback(debugMessageCallback, 0);
 
-        lampShader = new("Shaders/vertexposition.glsl", "Shaders/lamp.glsl");
-        litShader = new("Shaders/vertexpositionnormal.glsl", "Shaders/lit.glsl");
+        lampShader = new("Shaders/Vertex/VertexPosition.glsl", "Shaders/lamp.glsl");
+        litShader = new("Shaders/Vertex/VertexPositionTextureNormal.glsl", "Shaders/lit.glsl");
 
         vao = GL.GenVertexArray();
         GL.BindVertexArray(vao);
 
         vbo = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * VertexPositionNormal.SizeInBytes, vertices, BufferUsageHint.StaticDraw);
-        VertexPositionNormal.SetAttributes();
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * VertexPositionTextureNormal.SizeInBytes, vertices, BufferUsageHint.StaticDraw);
+        VertexPositionTextureNormal.SetAttributes();
 
         // ebo = GL.GenBuffer();
         // GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
@@ -109,7 +107,7 @@ class Window : GameWindow
 
         GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 
-        VertexPositionNormal.SetAttributes();
+        VertexPositionTextureNormal.SetAttributes();
 
         StbImage.stbi_set_flip_vertically_on_load(1);
         texture1 = LoadTexture("Assets/container.jpg");
@@ -127,21 +125,11 @@ class Window : GameWindow
             new(1.0f, 1.0f, 1.0f)
             );
 
-        Material bronze = new(
-            new(0.2125f,  0.1275f,  0.054f),
-            new(0.714f,   0.4284f,  0.18144f),
-            new(0.393548f,    0.271906f,    0.166721f),
-            0.2f
+        material = new(
+            texture1,
+            new(1, 1, 1),
+            .25f
             );
-
-        Material ruby = new(
-            new(0.1745f, 0.01175f, 0.01175f),
-            new(0.61424f, 0.04136f, 0.04136f),
-            new(0.727811f, 0.626959f, 0.626959f),
-            0.6f
-            );
-
-        material = ruby;
 
         base.OnLoad();
     }
@@ -199,7 +187,7 @@ class Window : GameWindow
 
         litShader.SetVector("viewPos", cameraPosition);
 
-        material.Apply(litShader, "material");
+        material.Apply(litShader, "material", 0);
         light.Apply(litShader, "light");
 
         for (int i = 0; i < positions.Length; i++)
@@ -235,7 +223,7 @@ class Window : GameWindow
         var image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlue);
 
         var texture = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, texture2);
+        GL.BindTexture(TextureTarget.Texture2D, texture);
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, image.Width, image.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, image.Data);
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
@@ -311,148 +299,5 @@ class Window : GameWindow
 
     public Window() : base(GameWindowSettings.Default, GetNativeWindowSettings())
     {
-    }
-}
-
-struct Light
-{
-    public Vector3 position;
-
-    public Vector3 ambient;
-    public Vector3 diffuse;
-    public Vector3 specular;
-
-    public Light(Vector3 position, Vector3 ambient, Vector3 diffuse, Vector3 specular)
-    {
-        this.position = position;
-        this.ambient = ambient;
-        this.diffuse = diffuse;
-        this.specular = specular;
-    }
-
-    public void Apply(Shader shader, string name)
-    {
-        shader.SetVector($"{name}.position", position);
-        shader.SetVector($"{name}.ambient", ambient);
-        shader.SetVector($"{name}.diffuse", diffuse);
-        shader.SetVector($"{name}.specular", specular);
-    }
-
-    public void Layout()
-    {
-        ImGui.DragFloat3("position", ref position.ImGui());
-        ImGui.ColorEdit3("ambient", ref ambient.ImGui());
-        ImGui.ColorEdit3("diffuse", ref diffuse.ImGui());
-        ImGui.ColorEdit3("specular", ref specular.ImGui());
-    }
-}
-
-struct Material
-{
-    public Vector3 ambient;
-    public Vector3 diffuse;
-    public Vector3 specular;
-    public float shininess;
-
-    public Material(Vector3 ambient, Vector3 diffuse, Vector3 specular, float shininess)
-    {
-        this.ambient = ambient;
-        this.diffuse = diffuse;
-        this.specular = specular;
-        this.shininess = shininess;
-    }
-
-    public void Apply(Shader shader, string name)
-    {
-        shader.SetVector($"{name}.ambient", ambient);
-        shader.SetVector($"{name}.diffuse", diffuse);
-        shader.SetVector($"{name}.specular", specular);
-        shader.SetFloat($"{name}.shininess", shininess);
-    }
-
-    public void Layout()
-    {
-        ImGui.ColorEdit3("ambient", ref ambient.ImGui());
-        ImGui.ColorEdit3("diffuse", ref diffuse.ImGui());
-        ImGui.ColorEdit3("specular", ref specular.ImGui());
-        ImGui.DragFloat("shininess", ref shininess);
-    }
-}
-
-interface IVertex
-{
-    static abstract int SizeInBytes { get; }
-    static abstract void SetAttributes();
-}
-
-struct VertexPosition : IVertex
-{
-    public static int SizeInBytes => Unsafe.SizeOf<VertexPosition>();
-    public Vector3 Position;
-
-    public VertexPosition(Vector3 position)
-    {
-        Position = position;
-    }
-
-    public static void SetAttributes()
-    {
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, SizeInBytes, 0);
-        GL.EnableVertexAttribArray(0);
-    }
-}
-
-struct VertexPositionNormal : IVertex
-{
-    public static int SizeInBytes => Unsafe.SizeOf<VertexPositionNormal>();
-    public Vector3 Position;
-    public Vector3 Normal;
-
-    public VertexPositionNormal(Vector3 position, Vector3 normal)
-    {
-        Position = position;
-        Normal = normal;
-    }
-
-    public static void SetAttributes()
-    {
-        nint positionOffset = Marshal.OffsetOf<VertexPositionNormal>(nameof(Position));
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, SizeInBytes, positionOffset);
-        GL.EnableVertexAttribArray(0);
-
-        nint normalOffset = Marshal.OffsetOf<VertexPositionNormal>(nameof(Normal));
-        GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, SizeInBytes, normalOffset);
-        GL.EnableVertexAttribArray(1);
-    }
-}
-
-struct VertexPositionTexCoord : IVertex
-{
-    public static int SizeInBytes => Unsafe.SizeOf<VertexPositionTexCoord>();
-
-    public Vector3 Position;
-    public Vector2 TexCoord;
-
-    public VertexPositionTexCoord(Vector3 position, Vector2 texCoord)
-    {
-        Position = position;
-        TexCoord = texCoord;
-    }
-
-    public static void SetAttributes()
-    {
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, SizeInBytes, 0);
-        GL.EnableVertexAttribArray(0);
-
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, SizeInBytes, Vector3.SizeInBytes);
-        GL.EnableVertexAttribArray(1);
-    }
-}
-
-static class Extensions
-{
-    public static ref System.Numerics.Vector3 ImGui(ref this Vector3 vector)
-    {
-        return ref Unsafe.As<Vector3, System.Numerics.Vector3>(ref vector);
     }
 }
