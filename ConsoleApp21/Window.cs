@@ -18,7 +18,8 @@ class Window : GameWindow
 
     Shader litShader;
     Shader lampShader;
-    int texture1, texture2, texture3;
+    int texture1, texture2;
+    int container2, container2Specular, container2Emission;
 
     int vbo; //, ebo;
     int vao, lightVao;
@@ -112,22 +113,25 @@ class Window : GameWindow
         StbImage.stbi_set_flip_vertically_on_load(1);
         texture1 = LoadTexture("Assets/container.jpg");
         texture2 = LoadTexture("Assets/awesomeface.png");
-        texture3 = LoadTexture("Assets/container2.png");
+        container2 = LoadTexture("Assets/container2.png");
+        container2Specular = LoadTexture("Assets/container2_specular.png");
+        container2Emission = LoadTexture("Assets/matrix.jpg");
 
         xr = 0;
         yr = MathF.PI;
         cameraPosition = new Vector3(0, 0, 3);
         
         light = new(
-            new(0, 0, -5), 
+            new(0, 0, -5, 1), 
             new(0.2f, 0.2f, 0.2f), 
             new(0.5f, 0.5f, 0.5f), 
             new(1.0f, 1.0f, 1.0f)
             );
 
         material = new(
-            texture1,
-            new(1, 1, 1),
+            container2,
+            container2Specular,
+            0,//container2Emission,
             .25f
             );
 
@@ -184,10 +188,10 @@ class Window : GameWindow
 
         litShader.SetMatrix("view", view);
         litShader.SetMatrix("proj", proj);
-
+        litShader.SetFloat("time", t);
         litShader.SetVector("viewPos", cameraPosition);
 
-        material.Apply(litShader, "material", 0);
+        material.Apply(litShader, "material");
         light.Apply(litShader, "light");
 
         for (int i = 0; i < positions.Length; i++)
@@ -205,7 +209,7 @@ class Window : GameWindow
 
         lampShader.SetMatrix("view", view);
         lampShader.SetMatrix("proj", proj);
-        lampShader.SetMatrix("model", Matrix4.CreateTranslation(light.position));
+        lampShader.SetMatrix("model", Matrix4.CreateTranslation(new(light.position)));
 
         lampShader.SetVector("lightColor", light.diffuse + light.ambient);
 
