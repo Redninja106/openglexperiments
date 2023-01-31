@@ -18,8 +18,8 @@ class Window : GameWindow
 
     Shader litShader;
     Shader lampShader;
-    int texture1, texture2;
-    int container2, container2Specular, container2Emission;
+    Texture texture1, texture2;
+    Texture container2, container2Specular, container2Emission;
 
     int vbo; //, ebo;
     int vao, lightVao;
@@ -80,6 +80,18 @@ class Window : GameWindow
         new(-1.3f,  1.0f, -1.5f)
     };
 
+    DirectionalLight directionalLight = default;
+    PointLight[] pointLights = new PointLight[8];
+    SpotLight[] spotLights = new SpotLight[8];
+
+    Vector3 cameraPosition;
+    float xr, yr;
+
+    float r;
+    float t;
+
+    Material material;
+
     protected override void OnLoad()
     {
         imGuiController = new(this);
@@ -110,42 +122,49 @@ class Window : GameWindow
 
         VertexPositionTextureNormal.SetAttributes();
 
-        StbImage.stbi_set_flip_vertically_on_load(1);
-        texture1 = LoadTexture("Assets/container.jpg");
-        texture2 = LoadTexture("Assets/awesomeface.png");
-        container2 = LoadTexture("Assets/container2.png");
-        container2Specular = LoadTexture("Assets/container2_specular.png");
-        container2Emission = LoadTexture("Assets/matrix.jpg");
+        texture1 = new Texture(TextureKind.Diffuse, "Assets/container.jpg");
+        texture2 = new Texture(TextureKind.Diffuse, "Assets/awesomeface.png");
+        container2 = new Texture(TextureKind.Diffuse, "Assets/container2.png");
+        container2Specular = new Texture(TextureKind.Specular, "Assets/container2_specular.png");
+        container2Emission = new Texture(TextureKind.Emission, "Assets/matrix.jpg");
 
         xr = 0;
         yr = MathF.PI;
         cameraPosition = new Vector3(0, 0, 3);
-        
-        light = new(
-            new(0, 0, -5, 1), 
-            new(0.2f, 0.2f, 0.2f), 
-            new(0.5f, 0.5f, 0.5f), 
-            new(1.0f, 1.0f, 1.0f)
+
+        pointLights[0] = new(
+            new(0, 0, -5), 
+            new(
+                new(0.2f, 0.2f, 0.2f), 
+                new(0.5f, 0.5f, 0.5f), 
+                new(1.0f, 1.0f, 1.0f)
+                )
             );
 
         material = new(
             container2,
             container2Specular,
-            0,//container2Emission,
+            null,//container2Emission,
             .25f
             );
 
+        for (int i = 0; i < pointLights.Length; i++)
+        {
+            ref var light = ref pointLights[i];
+            light.position = new(
+                (Random.Shared.NextSingle() - .5f) * 10,
+                (Random.Shared.NextSingle() - .5f) * 10,
+                (Random.Shared.NextSingle() - .5f) * 10
+                );
+            light.constant = 1.0f;
+            light.linear = 0.09f;
+            light.quadratic = 0.032f;
+
+            light.color.specular = Vector3.One;
+        }
+
         base.OnLoad();
     }
-
-    Vector3 cameraPosition;
-    float xr, yr;
-
-    float r;
-    float t;
-
-    Light light;
-    Material material;
 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
@@ -164,17 +183,48 @@ class Window : GameWindow
             material.Layout();
             ImGui.PopID();
         }
-        if (ImGui.CollapsingHeader("light"))
+
+        if (ImGui.CollapsingHeader("directional light"))
         {
-            ImGui.PushID("light");
-            light.Layout();
+            ImGui.PushID("directional light");
+            directionalLight.Layout();
             ImGui.PopID();
         }
-        else 
+
+        for (int i = 0; i < pointLights.Length; i++)
         {
-            Vector3 lightCol = new(MathF.Sin(t * 2), MathF.Sin(t * .7f), MathF.Sin(t * .2f));
-            light.ambient = lightCol * .2f;
-            light.diffuse = lightCol * .5f;
+            ref var light = ref pointLights[i];
+            if (ImGui.CollapsingHeader("light " + i))
+            {
+                ImGui.PushID("light " + i);
+                light.Layout();
+                ImGui.PopID();
+            }
+            else
+            {
+                // Vector3 lightCol = new(MathF.Sin(t * 2), MathF.Sin(t * .7f), MathF.Sin(t * .2f));
+                // lightCol = (lightCol + Vector3.One) * .5f;
+                // light.color.ambient = lightCol * .2f;
+                // light.color.diffuse = lightCol * .5f;
+            }
+        }
+
+        for (int i = 0; i < spotLights.Length; i++)
+        {
+            ref var light = ref spotLights[i];
+            if (ImGui.CollapsingHeader("spotlight " + i))
+            {
+                ImGui.PushID("spotlight " + i);
+                light.Layout();
+                ImGui.PopID();
+            }
+            else
+            {
+                // Vector3 lightCol = new(MathF.Sin(t * 2), MathF.Sin(t * .7f), MathF.Sin(t * .2f));
+                // lightCol = (lightCol + Vector3.One) * .5f;
+                // light.color.ambient = lightCol * .2f;
+                // light.color.diffuse = lightCol * .5f;
+            }
         }
 
         GL.Enable(EnableCap.DepthTest);
@@ -192,7 +242,19 @@ class Window : GameWindow
         litShader.SetVector("viewPos", cameraPosition);
 
         material.Apply(litShader, "material");
-        light.Apply(litShader, "light");
+        directionalLight.Apply(litShader, "directionalLight");
+        
+        for (int i = 0; i < pointLights.Length; i++)
+        {
+            var light = pointLights[i];
+            light.Apply(litShader, $"pointLights[{i}]");
+        }
+
+        for (int i = 0; i < spotLights.Length; i++)
+        {
+            var light = spotLights[i];
+            light.Apply(litShader, $"spotLights[{i}]");
+        }
 
         for (int i = 0; i < positions.Length; i++)
         {
@@ -203,40 +265,27 @@ class Window : GameWindow
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
         }
+        
+        litShader.SetMatrix("model", Matrix4.CreateScale(100) * Matrix4.CreateTranslation(0,-55,0));
+        GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
         GL.BindVertexArray(lightVao);
         lampShader.Use();
 
         lampShader.SetMatrix("view", view);
         lampShader.SetMatrix("proj", proj);
-        lampShader.SetMatrix("model", Matrix4.CreateTranslation(new(light.position)));
 
-        lampShader.SetVector("lightColor", light.diffuse + light.ambient);
-
-        GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+        foreach (var light in pointLights)
+        {
+            lampShader.SetMatrix("model", Matrix4.CreateTranslation(new(light.position)));
+            lampShader.SetVector("lightColor", light.color.diffuse + light.color.ambient);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+        }
 
         imGuiController.Render();
         SwapBuffers();
 
         base.OnRenderFrame(args);
-    }
-
-    private int LoadTexture(string path)
-    {
-        var bytes = File.ReadAllBytes(path);
-        var image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlue);
-
-        var texture = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, texture);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, image.Width, image.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, image.Data);
-        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-
-        return texture;
     }
 
     private void HandleInput(float dt)

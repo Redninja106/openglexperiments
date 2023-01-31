@@ -4,12 +4,12 @@ namespace ConsoleApp21;
 
 struct Material
 {
-    public int diffuseTexture;
-    public int specularTexture;
-    public int emissionTexture;
+    public Texture? diffuseTexture;
+    public Texture? specularTexture;
+    public Texture? emissionTexture;
     public float shininess;
 
-    public Material(int diffuse, int specular, int emission, float shininess)
+    public Material(Texture? diffuse, Texture? specular, Texture? emission, float shininess)
     {
         this.diffuseTexture = diffuse;
         this.specularTexture = specular;
@@ -19,32 +19,24 @@ struct Material
 
     public void Apply(Shader shader, string name)
     {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, this.diffuseTexture);
-        shader.SetInt($"{name}.diffuse", 0);
-
-        GL.ActiveTexture(TextureUnit.Texture1);
-        GL.BindTexture(TextureTarget.Texture2D, this.specularTexture);
-        shader.SetInt($"{name}.specular", 1);
-
-        GL.ActiveTexture(TextureUnit.Texture2);
-        GL.BindTexture(TextureTarget.Texture2D, this.emissionTexture);
-        shader.SetInt($"{name}.emission", 2);
+        diffuseTexture?.Apply(shader, $"{name}.emission", 0);
+        specularTexture?.Apply(shader, $"{name}.emission", 1);
+        emissionTexture?.Apply(shader, $"{name}.emission", 2);
 
         shader.SetFloat($"{name}.shininess", shininess);
     }
 
     public void Layout()
     {
-        ImGui.Image(diffuseTexture, new(100, 100));
+        ImGui.Image(diffuseTexture?.TextureID ?? 0, new(100, 100));
         ImGui.SameLine();
         ImGui.Text("diffuse");
         
-        ImGui.Image(specularTexture, new(100, 100));
+        ImGui.Image(specularTexture?.TextureID ?? 0, new(100, 100));
         ImGui.SameLine();
         ImGui.Text("specular");
 
-        ImGui.Image(emissionTexture, new(100, 100));
+        ImGui.Image(emissionTexture?.TextureID ?? 0, new(100, 100));
         ImGui.SameLine();
         ImGui.Text("emission");
 

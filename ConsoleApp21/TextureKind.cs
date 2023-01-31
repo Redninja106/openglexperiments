@@ -8,5 +8,6 @@ namespace ConsoleApp21;
 internal enum TextureKind
 {
     Diffuse,
-    Specular
+    Specular,
+    Emission
 }
