@@ -31,9 +31,9 @@ struct PointLight
     public void Layout()
     {
         ImGui.DragFloat3("position", ref position.ImGui());
-        ImGui.DragFloat("constant", ref constant);
-        ImGui.DragFloat("linear", ref linear);
-        ImGui.DragFloat("quadratic", ref quadratic);
+        ImGui.SliderFloat("constant", ref constant, 0, 2);
+        ImGui.SliderFloat("linear", ref linear, 0.001f, .1f);
+        ImGui.SliderFloat("quadratic", ref quadratic, 0.001f, .1f);
         color.Layout();
     }
 }

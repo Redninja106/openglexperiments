@@ -9,5 +9,6 @@ internal enum TextureKind
 {
     Diffuse,
     Specular,
-    Emission
+    Emission,
+    Normal,
 }

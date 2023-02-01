@@ -1,4 +1,4 @@
-﻿#version 410 core
+﻿#version 450 core
 
 struct LightColor
 {
@@ -34,10 +34,10 @@ struct SpotLight
 
 struct Material 
 {
-	sampler2D diffuse;
-	sampler2D specular;
-	sampler2D emission;
-	float shininess;
+	sampler2D diffuseMap0;
+	sampler2D specularMap0;
+	sampler2D emissionMap0;
+	sampler2D normalMap0;
 };
 
 out vec4 FragColor;
@@ -56,7 +56,7 @@ uniform SpotLight spotLights[SPOT_LIGHT_COUNT];
 
 uniform Material material;
 uniform float time;
-
+uniform vec2 uvScale;
 uniform vec3 viewPos;
 
 vec3 directionalLightBrightness(DirectionalLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
@@ -66,28 +66,9 @@ vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 ma
 
 void main()
 {
-	vec3 color = vec3(texture(material.diffuse, TexCoords));
-
-//	// ambient
-//	vec3 ambient = light.ambient * color;
-//	
-//	// diffuse
-//	vec3 lightDirection = normalize(vec3(light.vector) - Position);
-//
-//	vec3 normal = normalize(Normal);
-//	float diffuseBrightness = max(dot(normal, lightDirection), 0);
-//	vec3 diffuse = light.diffuse * color * diffuseBrightness;
-//	// specular
-//	vec3 viewDirection = normalize(viewPos - Position);
-//	vec3 reflectDirection = reflect(-lightDirection, normal);
-//
-//	vec3 specularColor = vec3(texture(material.specular, TexCoords));
-//	float specularBrightness = pow(max(dot(viewDirection, reflectDirection), 0), material.shininess * 128);
-//	vec3 specular = light.specular * (specularBrightness * specularColor);
-//	
 	vec3 normal = normalize(Normal);
-	vec3 diffuse = vec3(texture(material.diffuse, TexCoords));
-	vec3 specular = vec3(texture(material.specular, TexCoords));
+	vec3 diffuse = vec3(texture(material.diffuseMap0, TexCoords * uvScale));
+	vec3 specular = vec3(texture(material.specularMap0, TexCoords * uvScale));
 
 	vec3 incomingLight = vec3(0);
 
@@ -102,9 +83,9 @@ void main()
 	{
 		incomingLight += spotLightBrightness(spotLights[i], normal, diffuse, specular);
 	}
-	// emission
-	vec3 emission = vec3(texture(material.emission, TexCoords));
-	incomingLight += emission;
+
+	// vec3 emission = vec3(texture(material.emissionMap0, TexCoords * uvScale));
+	// incomingLight += emission;
 	FragColor = vec4(incomingLight, 1);
 }
 
@@ -120,8 +101,8 @@ vec3 pointLightBrightness(PointLight light, vec3 normal, vec3 matDiffuse, vec3 m
 	vec3 lightDirection = normalize(vec3(light.position) - Position);
 	
 	float dist = distance(light.position, Position);
-	float invAtt = (light.constant + light.linear * dist + light.quadratic * (dist * dist));
-	float attenuation = invAtt == 0 ? 0 : 1 / invAtt;
+	float invAtt = light.constant + light.linear * dist + light.quadratic * (dist * dist);
+	float attenuation = invAtt == 0 ? 0 : (1 / invAtt);
 
 	return attenuation * lightBrightness(light.color, lightDirection, normal, matDiffuse, matSpecular);
 }
@@ -142,7 +123,8 @@ vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 ma
 	vec3 viewDirection = normalize(viewPos - Position);
 	vec3 reflectDirection = reflect(-lightDirection, normal);
 
-	float specularBrightness = pow(max(dot(viewDirection, reflectDirection), 0), material.shininess * 128);
+	vec3 halfwayDirection = normalize(viewDirection + lightDirection);
+	float specularBrightness = pow(max(dot(normal, halfwayDirection), 0), 128);
 	float diffuseBrightness = max(dot(normal, lightDirection), 0);
 	
 	vec3 ambient = color.ambient * matDiffuse;

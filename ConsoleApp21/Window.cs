@@ -4,7 +4,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Silk.NET.Maths;
 using StbImageSharp;
 using System;
 using System.Drawing;
@@ -18,15 +17,14 @@ class Window : GameWindow
 
     Shader litShader;
     Shader lampShader;
-    Texture texture1, texture2;
-    Texture container2, container2Specular, container2Emission;
 
-    int vbo; //, ebo;
-    int vao, lightVao;
+    Mesh<VertexPositionTextureNormal> cubeMesh, planeMesh;
+    Model backpack;
+    Model sponza;
 
     DebugProc debugMessageCallback;
 
-    VertexPositionTextureNormal[] vertices = new VertexPositionTextureNormal[]
+    VertexPositionTextureNormal[] cubeVertices = new VertexPositionTextureNormal[]
     {
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
         new(new( 0.5f, -0.5f, -0.5f),  new( 1.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
@@ -66,6 +64,16 @@ class Window : GameWindow
         new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f))
     };
 
+    VertexPositionTextureNormal[] planeVertices = new VertexPositionTextureNormal[]
+    {
+        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0f, -0.5f),  new(1.0f, 1.0f), new(0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
+        new(new(-0.5f,  0f,  0.5f),  new(0.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
+        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f))
+    };
+
     Vector3[] positions = new Vector3[]
     {
         new( 0.0f,  0.0f,  0.0f),
@@ -86,11 +94,12 @@ class Window : GameWindow
 
     Vector3 cameraPosition;
     float xr, yr;
+    float zoom = 45;
 
     float r;
     float t;
 
-    Material material;
+    bool imguiWindowOpen;
 
     protected override void OnLoad()
     {
@@ -103,30 +112,38 @@ class Window : GameWindow
         lampShader = new("Shaders/Vertex/VertexPosition.glsl", "Shaders/lamp.glsl");
         litShader = new("Shaders/Vertex/VertexPositionTextureNormal.glsl", "Shaders/lit.glsl");
 
-        vao = GL.GenVertexArray();
-        GL.BindVertexArray(vao);
-
-        vbo = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * VertexPositionTextureNormal.SizeInBytes, vertices, BufferUsageHint.StaticDraw);
-        VertexPositionTextureNormal.SetAttributes();
+        // vao = GL.GenVertexArray();
+        // GL.BindVertexArray(vao);
+        // 
+        // vbo = GL.GenBuffer();
+        // GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+        // GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * VertexPositionTextureNormal.SizeInBytes, vertices, BufferUsageHint.StaticDraw);
+        // VertexPositionTextureNormal.SetAttributes();
 
         // ebo = GL.GenBuffer();
         // GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
         // GL.BufferData(BufferTarget.ElementArrayBuffer, sizeof(uint) * indices.Length, indices, BufferUsageHint.StaticDraw);
 
-        lightVao = GL.GenVertexArray();
-        GL.BindVertexArray(lightVao);
+        // lightVao = GL.GenVertexArray();
+        // GL.BindVertexArray(lightVao);
+        // 
+        // GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+        // 
+        // VertexPositionTextureNormal.SetAttributes();
 
-        GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+        //var texture1 = Texture.Load(TextureKind.Diffuse, "Assets/container.jpg");
+        //var texture2 = Texture.Load(TextureKind.Diffuse, "Assets/awesomeface.png");
+        //var container2 = Texture.Load(TextureKind.Diffuse, "Assets/container2.png");
+        //var container2Specular = Texture.Load(TextureKind.Specular, "Assets/container2_specular.png");
+        //var container2Emission = Texture.Load(TextureKind.Emission, null); // "Assets/matrix.jpg");
+        //var wood = Texture.Load(TextureKind.Diffuse, "Assets/wood.png");
+        var brickwall = Texture.Load(TextureKind.Diffuse, "Assets/brickwall/brickwall.jpg");
+        var brickwallNormal = Texture.Load(TextureKind.Normal, "Assets/brickwall/brickwall_normal.jpg");
 
-        VertexPositionTextureNormal.SetAttributes();
-
-        texture1 = new Texture(TextureKind.Diffuse, "Assets/container.jpg");
-        texture2 = new Texture(TextureKind.Diffuse, "Assets/awesomeface.png");
-        container2 = new Texture(TextureKind.Diffuse, "Assets/container2.png");
-        container2Specular = new Texture(TextureKind.Specular, "Assets/container2_specular.png");
-        container2Emission = new Texture(TextureKind.Emission, "Assets/matrix.jpg");
+        //cubeMesh = new(cubeVertices, null, new[] { container2, container2Specular });
+        planeMesh = new(planeVertices, null, new[] { brickwall, brickwallNormal, Texture.SpecularAlways });
+        //backpack = new("Assets/backpack/backpack.obj");
+        sponza = new Model("Assets/sponza/sponza.gltf");
 
         xr = 0;
         yr = MathF.PI;
@@ -141,13 +158,6 @@ class Window : GameWindow
                 )
             );
 
-        material = new(
-            container2,
-            container2Specular,
-            null,//container2Emission,
-            .25f
-            );
-
         for (int i = 0; i < pointLights.Length; i++)
         {
             ref var light = ref pointLights[i];
@@ -159,8 +169,6 @@ class Window : GameWindow
             light.constant = 1.0f;
             light.linear = 0.09f;
             light.quadratic = 0.032f;
-
-            light.color.specular = Vector3.One;
         }
 
         base.OnLoad();
@@ -173,75 +181,29 @@ class Window : GameWindow
 
         HandleInput((float)args.Time);
 
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Multisample);
+        GL.Enable(EnableCap.FramebufferSrgb);
+
         GL.ClearColor(new Color4(.1f, .1f, .12f, 1f));
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        ImGui.DragFloat("r", ref r);
 
-        if (ImGui.CollapsingHeader("material"))
-        {
-            ImGui.PushID("material");
-            material.Layout();
-            ImGui.PopID();
-        }
+        Layout();
 
-        if (ImGui.CollapsingHeader("directional light"))
-        {
-            ImGui.PushID("directional light");
-            directionalLight.Layout();
-            ImGui.PopID();
-        }
-
-        for (int i = 0; i < pointLights.Length; i++)
-        {
-            ref var light = ref pointLights[i];
-            if (ImGui.CollapsingHeader("light " + i))
-            {
-                ImGui.PushID("light " + i);
-                light.Layout();
-                ImGui.PopID();
-            }
-            else
-            {
-                // Vector3 lightCol = new(MathF.Sin(t * 2), MathF.Sin(t * .7f), MathF.Sin(t * .2f));
-                // lightCol = (lightCol + Vector3.One) * .5f;
-                // light.color.ambient = lightCol * .2f;
-                // light.color.diffuse = lightCol * .5f;
-            }
-        }
-
-        for (int i = 0; i < spotLights.Length; i++)
-        {
-            ref var light = ref spotLights[i];
-            if (ImGui.CollapsingHeader("spotlight " + i))
-            {
-                ImGui.PushID("spotlight " + i);
-                light.Layout();
-                ImGui.PopID();
-            }
-            else
-            {
-                // Vector3 lightCol = new(MathF.Sin(t * 2), MathF.Sin(t * .7f), MathF.Sin(t * .2f));
-                // lightCol = (lightCol + Vector3.One) * .5f;
-                // light.color.ambient = lightCol * .2f;
-                // light.color.diffuse = lightCol * .5f;
-            }
-        }
-
-        GL.Enable(EnableCap.DepthTest);
         var viewRotMatrix = Matrix3.CreateRotationY(yr) * Matrix3.CreateRotationX(xr);
 
         Matrix4 view = Matrix4.LookAt(cameraPosition, cameraPosition + viewRotMatrix * Vector3.UnitZ, Vector3.UnitY);
-        Matrix4 proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45f), ClientSize.X / (float)ClientSize.Y, .1f, 100f);
+        Matrix4 proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(zoom), ClientSize.X / (float)ClientSize.Y, .1f, 100f);
 
-        GL.BindVertexArray(vao);
+        // GL.BindVertexArray(vao);
         litShader.Use();
 
         litShader.SetMatrix("view", view);
         litShader.SetMatrix("proj", proj);
         litShader.SetFloat("time", t);
+        litShader.SetVector("uvScale", Vector2.One);
         litShader.SetVector("viewPos", cameraPosition);
 
-        material.Apply(litShader, "material");
         directionalLight.Apply(litShader, "directionalLight");
         
         for (int i = 0; i < pointLights.Length; i++)
@@ -262,16 +224,22 @@ class Window : GameWindow
             float angle = 20 * (i + r + (i % 3 is 0 ? t : 0));
             Matrix4 rotation = Matrix4.CreateFromAxisAngle(new(1, .3f, .5f), MathHelper.DegreesToRadians(angle));
             litShader.SetMatrix("model", rotation * translation);
-
-            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+            //cubeMesh.Draw(litShader);
         }
-        
-        litShader.SetMatrix("model", Matrix4.CreateScale(100) * Matrix4.CreateTranslation(0,-55,0));
-        GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
 
-        GL.BindVertexArray(lightVao);
+        litShader.SetMatrix("model", Matrix4.CreateRotationX(MathHelper.DegreesToRadians(90)) * Matrix4.CreateTranslation(0,0,0));
+        planeMesh.Draw(litShader);
+
+        litShader.SetMatrix("model", Matrix4.CreateScale(.025f) * Matrix4.CreateTranslation(0,0,0));
+        sponza.Draw(litShader);
+
+        //backpack.Draw(litShader);
+
+        litShader.SetMatrix("model", Matrix4.CreateScale(100) * Matrix4.CreateTranslation(0,-5,0));
+        litShader.SetVector("uvScale", new Vector2(20));
+        //planeMesh.Draw(litShader);
+
         lampShader.Use();
-
         lampShader.SetMatrix("view", view);
         lampShader.SetMatrix("proj", proj);
 
@@ -279,9 +247,13 @@ class Window : GameWindow
         {
             lampShader.SetMatrix("model", Matrix4.CreateTranslation(new(light.position)));
             lampShader.SetVector("lightColor", light.color.diffuse + light.color.ambient);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+            //cubeMesh.Draw(lampShader);
         }
 
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.Multisample);
+        GL.Disable(EnableCap.FramebufferSrgb);
+        
         imGuiController.Render();
         SwapBuffers();
 
@@ -295,7 +267,7 @@ class Window : GameWindow
             xr -= MouseState.Delta.Y * 0.001f;
             yr += MouseState.Delta.X * 0.001f;
 
-            xr = Math.Clamp(xr, -MathF.PI * .5f, MathF.PI * .5f);
+            xr = Math.Clamp(xr, -MathF.PI * .499f, MathF.PI * .499f);
         }
 
         var rotMatrix = Matrix3.CreateRotationY(yr) * Matrix3.CreateRotationX(xr);
@@ -315,12 +287,83 @@ class Window : GameWindow
             delta -= Vector3.UnitY;
 
         cameraPosition += rotMatrix * (delta * dt * 5f);
+
+        float zoomDelta = 0;
+        if (KeyboardState.IsKeyDown(Keys.Minus))
+            zoomDelta++;
+        if (KeyboardState.IsKeyDown(Keys.Equal))
+            zoomDelta--;
+
+        zoom += zoomDelta * dt * 50;
+        zoom = Math.Clamp(zoom, 1, 179);
+    }
+
+    private void Layout()
+    {
+        if (KeyboardState.IsKeyPressed(Keys.F1))
+            imguiWindowOpen = !imguiWindowOpen;
+
+        if (imguiWindowOpen && ImGui.Begin("debug", ref imguiWindowOpen))
+        {
+            if (ImGui.BeginTabBar("tab bar"))
+            {
+                if (ImGui.BeginTabItem("directional light"))
+                {
+                    if (ImGui.CollapsingHeader("directional light"))
+                    {
+                        ImGui.PushID("directional light");
+                        directionalLight.Layout();
+                        ImGui.PopID();
+                    }
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("point lights"))
+                {
+                    for (int i = 0; i < pointLights.Length; i++)
+                    {
+                        ref var light = ref pointLights[i];
+                        if (ImGui.CollapsingHeader("light " + i))
+                        {
+                            ImGui.PushID("light " + i);
+                            light.Layout();
+                            ImGui.PopID();
+                        }
+                    }
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("spot lights"))
+                {
+                    for (int i = 0; i < spotLights.Length; i++)
+                    {
+                        ref var light = ref spotLights[i];
+                        if (ImGui.CollapsingHeader("spotlight " + i))
+                        {
+                            ImGui.PushID("spotlight " + i);
+                            light.Layout();
+                            ImGui.PopID();
+                        }
+                    }
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("model"))
+                {
+                    sponza.Layout();
+                }
+
+                ImGui.EndTabBar();
+            }
+        }
     }
 
     protected override void OnUnload()
     {
-        litShader.Dispose();
-        GL.DeleteBuffer(vbo);
+        cubeMesh?.Dispose();
+        lampShader?.Dispose();
+        litShader?.Dispose();
+
         imGuiController.Dispose();
 
         base.OnUnload();
@@ -344,10 +387,11 @@ class Window : GameWindow
 
     private static NativeWindowSettings GetNativeWindowSettings()
     {
-        var result = NativeWindowSettings.Default;
-        result.Flags |= ContextFlags.Debug;
-        result.APIVersion = new(4, 1);
-        return result;
+        var settings = NativeWindowSettings.Default;
+        settings.Flags |= ContextFlags.Debug;
+        settings.APIVersion = new(4, 1);
+        settings.NumberOfSamples = 16;
+        return settings;
     }
 
     public Window() : base(GameWindowSettings.Default, GetNativeWindowSettings())

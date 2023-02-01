@@ -8,27 +8,33 @@ namespace ConsoleApp21;
 internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
 {
     private readonly TVertex[] vertices;
-    private readonly uint[] indices;
-    private readonly Texture[] textures;
+    private readonly uint[]? indices;
+    private readonly List<Texture> textures;
     private readonly int vao, vbo, ebo;
 
-    public Mesh(TVertex[] vertices, uint[] indices, Texture[] textures)
+    public Mesh(TVertex[] vertices, uint[]? indices, Texture[] textures)
     {
         this.vertices = vertices;
         this.indices = indices;
-        this.textures = textures;
+        this.textures = new(textures);
+
+        if (!this.textures.Any(t => t.Kind is TextureKind.Specular))
+            this.textures.Add(Texture.SpecularAlways);
 
         vao = GL.GenVertexArray();
         vbo = GL.GenBuffer();
-        ebo = GL.GenBuffer();
 
         GL.BindVertexArray(vao);
 
         GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * TVertex.SizeInBytes, vertices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * TVertex.SizeInBytes, this.vertices, BufferUsageHint.StaticDraw);
 
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+        if (this.indices is not null)
+        {
+            ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, this.indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
+        }
 
         TVertex.SetAttributes();
     }
@@ -37,26 +43,65 @@ internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
     {
         // sampler name format - [kind]Map[i] - ex. diffuseMap1
         Dictionary<TextureKind, int> textureCounts = new();
-        for (int i = 0; i < textures.Length; i++)
+        for (int i = 0; i < textures.Count; i++)
         {
             var texture = textures[i];
+
+            if (!textureCounts.ContainsKey(texture.Kind))
+            {
+                textureCounts.Add(texture.Kind, 0);
+            }
 
             var kind = texture.Kind.ToString().ToLower();
             var count = textureCounts[texture.Kind];
 
-            texture.Apply(shader, $"{kind}Map{count}", i);
+            texture.Apply(shader, $"material.{kind}Map{count}", i);
 
             textureCounts[texture.Kind]++;
         }
 
         GL.BindVertexArray(this.vao);
-        GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+
+        if (indices is null)
+        {
+            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Length);
+        }
+        else
+        {
+            GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+        }
+
+        for (int i = 0; i < textures.Count; i++)
+        {
+            GL.ActiveTexture(TextureUnit.Texture0 + i);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
     }
 
     public void Dispose()
     {
         GL.DeleteBuffer(vbo);
-        GL.DeleteBuffer(ebo);
+        
+        if (indices is not null)
+            GL.DeleteBuffer(ebo);
+
         GL.DeleteVertexArray(vao);
+    }
+
+    public void Layout()
+    {
+        if (ImGui.TreeNode("textures"))
+        {
+            foreach (var texture in textures)
+            {
+                ImGui.Columns(2);
+                ImGui.Image(texture.TextureID, new(100, 100));
+                ImGui.NextColumn();
+                ImGui.Text(texture.Path ?? "");
+                ImGui.Text(texture.Kind.ToString());
+                ImGui.Columns(1);
+            }
+            ImGui.TreePop();
+        }
     }
 }
