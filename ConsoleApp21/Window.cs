@@ -18,9 +18,10 @@ class Window : GameWindow
     Shader litShader;
     Shader lampShader;
 
-    Mesh<VertexPositionTextureNormal> cubeMesh, planeMesh;
+    Mesh<VertexPositionTextureNormalTangent> cubeMesh, planeMesh;
     Model backpack;
     Model sponza;
+    Mesh<VertexPositionTextureNormal> cube;
 
     DebugProc debugMessageCallback;
 
@@ -64,14 +65,14 @@ class Window : GameWindow
         new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f))
     };
 
-    VertexPositionTextureNormal[] planeVertices = new VertexPositionTextureNormal[]
+    VertexPositionTextureNormalTangent[] planeVertices = new VertexPositionTextureNormalTangent[]
     {
-        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0f, -0.5f),  new(1.0f, 1.0f), new(0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
-        new(new(-0.5f,  0f,  0.5f),  new(0.0f, 0.0f), new(0.0f,  1.0f,  0.0f)),
-        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f))
+        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new( 0.5f,  0f, -0.5f),  new(1.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new(-0.5f,  0f,  0.5f),  new(0.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f))
     };
 
     Vector3[] positions = new Vector3[]
@@ -99,7 +100,10 @@ class Window : GameWindow
     float r;
     float t;
 
+    bool renderNormals;
     bool imguiWindowOpen;
+
+    Vector3 cubePosition = new Vector3(0, 1, 0);
 
     protected override void OnLoad()
     {
@@ -110,7 +114,7 @@ class Window : GameWindow
         GL.DebugMessageCallback(debugMessageCallback, 0);
 
         lampShader = new("Shaders/Vertex/VertexPosition.glsl", "Shaders/lamp.glsl");
-        litShader = new("Shaders/Vertex/VertexPositionTextureNormal.glsl", "Shaders/lit.glsl");
+        litShader = new("Shaders/Vertex/VertexPositionTextureNormalTangent.glsl", "Shaders/lit.glsl");
 
         // vao = GL.GenVertexArray();
         // GL.BindVertexArray(vao);
@@ -133,30 +137,22 @@ class Window : GameWindow
 
         //var texture1 = Texture.Load(TextureKind.Diffuse, "Assets/container.jpg");
         //var texture2 = Texture.Load(TextureKind.Diffuse, "Assets/awesomeface.png");
-        //var container2 = Texture.Load(TextureKind.Diffuse, "Assets/container2.png");
-        //var container2Specular = Texture.Load(TextureKind.Specular, "Assets/container2_specular.png");
+        var container2 = Texture.Load(TextureKind.Diffuse, "Assets/container2.png");
+        var container2Specular = Texture.Load(TextureKind.Specular, "Assets/container2_specular.png");
         //var container2Emission = Texture.Load(TextureKind.Emission, null); // "Assets/matrix.jpg");
         //var wood = Texture.Load(TextureKind.Diffuse, "Assets/wood.png");
         var brickwall = Texture.Load(TextureKind.Diffuse, "Assets/brickwall/brickwall.jpg");
         var brickwallNormal = Texture.Load(TextureKind.Normal, "Assets/brickwall/brickwall_normal.jpg");
 
-        //cubeMesh = new(cubeVertices, null, new[] { container2, container2Specular });
+        cube = new(cubeVertices, null, new[] { container2, container2Specular });
         planeMesh = new(planeVertices, null, new[] { brickwall, brickwallNormal, Texture.SpecularAlways });
-        //backpack = new("Assets/backpack/backpack.obj");
+        backpack = new("Assets/backpack/backpack.obj");
         sponza = new Model("Assets/sponza/sponza.gltf");
+
 
         xr = 0;
         yr = MathF.PI;
         cameraPosition = new Vector3(0, 0, 3);
-
-        pointLights[0] = new(
-            new(0, 0, -5), 
-            new(
-                new(0.2f, 0.2f, 0.2f), 
-                new(0.5f, 0.5f, 0.5f), 
-                new(1.0f, 1.0f, 1.0f)
-                )
-            );
 
         for (int i = 0; i < pointLights.Length; i++)
         {
@@ -170,6 +166,20 @@ class Window : GameWindow
             light.linear = 0.09f;
             light.quadratic = 0.032f;
         }
+
+        pointLights[0] = new()
+        {
+            position = new(0, 0, 1),
+            constant = 1.0f,
+            linear = 0.09f,
+            quadratic = 0.032f,
+            color = new()
+            {
+                ambient = new(0.2f, 0.2f, 0.2f),
+                diffuse = new(0.8f, 0.8f, 0.8f),
+                specular = new(0.5f, 0.5f, 0.5f)
+            },
+        };
 
         base.OnLoad();
     }
@@ -203,6 +213,7 @@ class Window : GameWindow
         litShader.SetFloat("time", t);
         litShader.SetVector("uvScale", Vector2.One);
         litShader.SetVector("viewPos", cameraPosition);
+        litShader.SetBool("renderNormals", renderNormals);
 
         directionalLight.Apply(litShader, "directionalLight");
         
@@ -227,7 +238,10 @@ class Window : GameWindow
             //cubeMesh.Draw(litShader);
         }
 
-        litShader.SetMatrix("model", Matrix4.CreateRotationX(MathHelper.DegreesToRadians(90)) * Matrix4.CreateTranslation(0,0,0));
+        litShader.SetMatrix("model", Matrix4.CreateTranslation(cubePosition));
+        backpack.Draw(litShader);
+
+        litShader.SetMatrix("model", Matrix4.CreateRotationX(MathHelper.DegreesToRadians(90)) * Matrix4.CreateRotationY(r) * Matrix4.CreateTranslation(0,1,0));
         planeMesh.Draw(litShader);
 
         litShader.SetMatrix("model", Matrix4.CreateScale(.025f) * Matrix4.CreateTranslation(0,0,0));
@@ -305,6 +319,17 @@ class Window : GameWindow
 
         if (imguiWindowOpen && ImGui.Begin("debug", ref imguiWindowOpen))
         {
+            ImGui.DragFloat3("cube position", ref cubePosition.ImGui());
+
+            if (ImGui.Button("recompile shaders"))
+            {
+                litShader?.Dispose();
+                litShader = new("Shaders/Vertex/VertexPositionTextureNormalTangent.glsl", "Shaders/lit.glsl");
+            }
+
+            ImGui.Checkbox("render normals", ref renderNormals);
+            ImGui.DragFloat("r", ref r);
+
             if (ImGui.BeginTabBar("tab bar"))
             {
                 if (ImGui.BeginTabItem("directional light"))
@@ -348,9 +373,19 @@ class Window : GameWindow
                     ImGui.EndTabItem();
                 }
 
-                if (ImGui.BeginTabItem("model"))
+                if (ImGui.BeginTabItem("sponza"))
                 {
                     sponza.Layout();
+                }
+
+                if (ImGui.BeginTabItem("brick wall"))
+                {
+                    planeMesh.Layout();
+                }
+
+                if (ImGui.BeginTabItem("backpack"))
+                {
+                    backpack.Layout();
                 }
 
                 ImGui.EndTabBar();
@@ -391,6 +426,7 @@ class Window : GameWindow
         settings.Flags |= ContextFlags.Debug;
         settings.APIVersion = new(4, 1);
         settings.NumberOfSamples = 16;
+        settings.Profile = ContextProfile.Compatability;
         return settings;
     }
 

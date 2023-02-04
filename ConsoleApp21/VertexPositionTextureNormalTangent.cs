@@ -16,13 +16,15 @@ internal struct VertexPositionTextureNormalTangent : IVertex
     public Vector2 TexCoord;
     public Vector3 Normal;
     public Vector3 Tangent;
+    public Vector3 Bitangent;
 
-    public VertexPositionTextureNormalTangent(Vector3 position, Vector2 texCoord, Vector3 normal, Vector3 tangent)
+    public VertexPositionTextureNormalTangent(Vector3 position, Vector2 texCoord, Vector3 normal, Vector3 tangent, Vector3 bitangent)
     {
         Position = position;
         TexCoord = texCoord;
         Normal = normal;
         Tangent = tangent;
+        Bitangent = bitangent;
     }
 
     public static void SetAttributes()
@@ -42,5 +44,9 @@ internal struct VertexPositionTextureNormalTangent : IVertex
         nint tangentOffset = Marshal.OffsetOf<VertexPositionTextureNormalTangent>(nameof(Tangent));
         GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, SizeInBytes, tangentOffset);
         GL.EnableVertexAttribArray(3);
+
+        nint bitangentOffset = Marshal.OffsetOf<VertexPositionTextureNormalTangent>(nameof(Bitangent));
+        GL.VertexAttribPointer(4, 3, VertexAttribPointerType.Float, false, SizeInBytes, bitangentOffset);
+        GL.EnableVertexAttribArray(4);
     }
 }

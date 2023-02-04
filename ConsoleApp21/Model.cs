@@ -11,7 +11,7 @@ internal class Model
 {
     private static readonly AssimpContext assimpContext = new();
     
-    private readonly List<Mesh<VertexPositionTextureNormalTangent>> meshes = new();
+    public readonly List<Mesh<VertexPositionTextureNormalTangent>> meshes = new();
     private readonly string directory;
 
     public PointLight[] PointLights { get; }
@@ -20,7 +20,7 @@ internal class Model
 
     public Model(string path)
     {
-        var scene = assimpContext.ImportFile(path, PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs);
+        var scene = assimpContext.ImportFile(path, PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
         directory = Path.GetDirectoryName(path) ?? throw new Exception();
 
         LoadNode(scene.RootNode, scene);
@@ -116,6 +116,9 @@ internal class Model
             {
                 var tangent = mesh.Tangents[i];
                 vertices[i].Tangent = tangent.AsVector3();
+
+                var bitangent = mesh.BiTangents[i];
+                vertices[i].Bitangent = bitangent.AsVector3();
             }
         }
 
@@ -135,6 +138,7 @@ internal class Model
             textures.AddRange(LoadTextures(material, TextureType.Diffuse));
             textures.AddRange(LoadTextures(material, TextureType.Specular));
             textures.AddRange(LoadTextures(material, TextureType.Normals));
+            textures.AddRange(LoadTextures(material, TextureType.Height));
         }
 
         return new Mesh<VertexPositionTextureNormalTangent>(vertices, indices, textures.ToArray());
@@ -148,6 +152,7 @@ internal class Model
             TextureType.Specular => TextureKind.Specular,
             TextureType.Emissive => TextureKind.Emission,
             TextureType.Normals => TextureKind.Normal,
+            TextureType.Height => TextureKind.Normal,
         };
 
         for (int i = 0; i < material.GetMaterialTextureCount(type); i++)
@@ -172,7 +177,7 @@ internal class Model
         foreach (var mesh in meshes)
         {
             ImGui.PushID(mesh.GetHashCode());
-            if (ImGui.CollapsingHeader("mesh"))
+            if (ImGui.CollapsingHeader(mesh.ToString()))
                 mesh.Layout();
             ImGui.PopID();
         }

@@ -43,8 +43,9 @@ struct Material
 out vec4 FragColor;
 
 in vec3 Position;
-in vec3 Normal;
 in vec2 TexCoords;
+in vec3 Normal;
+in mat3 TangentSpaceMatrix;
 
 uniform DirectionalLight directionalLight;
 
@@ -58,6 +59,7 @@ uniform Material material;
 uniform float time;
 uniform vec2 uvScale;
 uniform vec3 viewPos;
+uniform bool renderNormals;
 
 vec3 directionalLightBrightness(DirectionalLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
 vec3 pointLightBrightness(PointLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
@@ -66,7 +68,38 @@ vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 ma
 
 void main()
 {
-	vec3 normal = normalize(Normal);
+	vec3 normal = vec3(texture(material.normalMap0, TexCoords * uvScale));
+	normal = (normal * 2) - vec3(1);
+
+	// vec3 tangent = TangentSpaceMatrix[0];
+	// vec3 bitangent = TangentSpaceMatrix[1];
+	// vec3 calculatedNormal = cross(tangent, bitangent);
+	// 
+	// float alignment = dot(calculatedNormal, TangentSpaceMatrix[2]);
+	normal = normalize(TangentSpaceMatrix * normal);
+//	if (alignment < 0)
+//	{
+//		mat3 corrected = TangentSpaceMatrix;
+//		corrected[0] = -tangent;
+//		normal = normalize(corrected * normal);
+//	}
+//	else
+//	{
+//	normal = normalize(TangentSpaceMatrix * normal);
+//	}
+
+	if (normal == vec3(0))
+	{
+		// use vertex normal
+		normal = normalize(Normal);
+	}
+
+	if (renderNormals)
+	{
+		FragColor = vec4(normal*.5+.5,1);
+		return;
+	}
+
 	vec3 diffuse = vec3(texture(material.diffuseMap0, TexCoords * uvScale));
 	vec3 specular = vec3(texture(material.specularMap0, TexCoords * uvScale));
 

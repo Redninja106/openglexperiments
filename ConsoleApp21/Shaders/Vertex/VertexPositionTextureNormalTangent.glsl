@@ -3,19 +3,16 @@ layout (location = 0) in vec3 vertexPosition;
 layout (location = 1) in vec2 vertexTexCoords;
 layout (location = 2) in vec3 vertexNormal;
 layout (location = 3) in vec3 vertexTangent;
+layout (location = 4) in vec3 vertexBitangent;
 
 out vec3 Position;
 out vec2 TexCoords;
-out vec3 TangentLightPos;
-out vec3 TangentViewPos;
-out vec3 TangentFragPos;
+out vec3 Normal;
+out mat3 TangentSpaceMatrix;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
-
-uniform vec3 lightPos;
-uniform vec3
 
 void main()
 {
@@ -25,10 +22,21 @@ void main()
 	
 	mat3 normalMatrix = mat3(transpose(inverse(model)));
 	
-	vec3 normal = normalize(normalMatrix * vertexNormal);
-	vec3 tangent = normalize(normalMatrix * vertexTangent);
-	vec3 bitangent = cross(normal, tangent);
+	Normal = normalize(vec3(model * vec4(vertexNormal, 0)));
+	vec3 tangent = normalize(vec3(model * vec4(vertexTangent, 0)));
+	vec3 bitangent = normalize(vec3(model * vec4(vertexBitangent, 0))); // cross(tangent, Normal);
+	//vec3 normal = normalize(vertexNormal);
+    //vec3 tangent = normalize(vertexNormal);
+
+	if (dot(cross(Normal, tangent), bitangent) < 0.0)
+	{
+		tangent = -tangent;
+	}
 	
-	mat3 tbn = transpose(mat3(tangent, bitangent, normal));
-	TangentLightPos = tbn * lightPos;
+	if (dot(cross(Normal, bitangent), tangent) > 0.0)
+	{
+		bitangent = -bitangent;
+	}
+
+	TangentSpaceMatrix = mat3(tangent, bitangent, Normal);
 }

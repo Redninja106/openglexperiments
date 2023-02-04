@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace ConsoleApp21;
 internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
 {
-    private readonly TVertex[] vertices;
-    private readonly uint[]? indices;
-    private readonly List<Texture> textures;
+    public readonly TVertex[] vertices;
+    public readonly uint[]? indices;
+    public readonly List<Texture> textures;
     private readonly int vao, vbo, ebo;
 
     public Mesh(TVertex[] vertices, uint[]? indices, Texture[] textures)
@@ -103,5 +103,10 @@ internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
             }
             ImGui.TreePop();
         }
+    }
+
+    public override string ToString()
+    {
+        return $"Mesh (diffuse: {textures.Count(t => t.Kind is TextureKind.Diffuse)}, normal: {textures.Count(t => t.Kind is TextureKind.Normal)}) ";
     }
 }
