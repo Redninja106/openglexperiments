@@ -18,9 +18,6 @@ internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
         this.indices = indices;
         this.textures = new(textures);
 
-        if (!this.textures.Any(t => t.Kind is TextureKind.Specular))
-            this.textures.Add(Texture.SpecularAlways);
-
         vao = GL.GenVertexArray();
         vbo = GL.GenBuffer();
 
@@ -36,12 +33,18 @@ internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
             GL.BufferData(BufferTarget.ElementArrayBuffer, this.indices.Length * sizeof(uint), this.indices, BufferUsageHint.StaticDraw);
         }
 
+        var maxAttribs = GL.GetInteger(GetPName.MaxVertexAttribs);
+        for (int i = 0; i < maxAttribs; i++)
+        {
+            GL.DisableVertexAttribArray(i);
+        }
+
         TVertex.SetAttributes();
     }
 
     public void Draw(Shader shader)
     {
-        // sampler name format - [kind]Map[i] - ex. diffuseMap1
+        // sampler name format - [kind]Map[i] - ex. diffuseMap0
         Dictionary<TextureKind, int> textureCounts = new();
         for (int i = 0; i < textures.Count; i++)
         {
@@ -76,6 +79,16 @@ internal class Mesh<TVertex> : IDisposable where TVertex : struct, IVertex
             GL.ActiveTexture(TextureUnit.Texture0 + i);
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
+    }
+
+    public void UpdateVertices(TVertex[] vertices, int offset = 0)
+    {
+        if (offset + vertices.Length >= this.vertices.Length)
+            throw new Exception();
+
+        vertices.CopyTo(this.vertices, offset);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, this.vbo);
+        GL.BufferSubData<TVertex>(BufferTarget.ArrayBuffer, 0, TVertex.SizeInBytes, ref vertices[offset]);
     }
 
     public void Dispose()

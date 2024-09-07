@@ -57,7 +57,6 @@ internal class Shader : IDisposable
         }
     }
 
-
     public void Dispose()
     {
         GL.DeleteProgram(program);
@@ -110,5 +109,13 @@ internal class Shader : IDisposable
     {
         var location = GL.GetUniformLocation(program, name);
         GL.UniformMatrix4(location, false, ref value);
+    }
+
+    public void SetTexture(string name, int texture, int unit)
+    {
+        var location = GL.GetUniformLocation(program, name);
+        GL.Uniform1(location, unit);
+        GL.ActiveTexture(TextureUnit.Texture0 + unit);
+        GL.BindTexture(TextureTarget.Texture2D, texture);
     }
 }

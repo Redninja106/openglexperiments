@@ -3,10 +3,14 @@ out vec4 FragColor;
 
 in vec2 texCoord;
 
-uniform sampler2D texture1;
-uniform sampler2D texture2;
+struct Material
+{
+    sampler2D diffuseMap0;
+};
+
+uniform Material material;
 
 void main()
 {
-    FragColor = mix(texture(texture1, texCoord), texture(texture2, texCoord), .4);
+    FragColor = vec4(texture(material.diffuseMap0, texCoord).rrr, 1);
 } 

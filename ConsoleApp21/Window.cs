@@ -7,6 +7,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using StbImageSharp;
 using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Transactions;
 
 namespace ConsoleApp21;
@@ -15,64 +16,72 @@ class Window : GameWindow
 {
     ImGuiController imGuiController;
 
-    Shader litShader;
+    Shader litShader, depthShader;
     Shader lampShader;
+    Shader quadShader;
 
-    Mesh<VertexPositionTextureNormalTangent> cubeMesh, planeMesh;
+    Mesh<VertexPositionTextureNormalTangent> planeMesh;
     Model backpack;
     Model sponza;
     Mesh<VertexPositionTextureNormal> cube;
+    Mesh<VertexPositionTexture> quad;
 
     DebugProc debugMessageCallback;
 
     VertexPositionTextureNormal[] cubeVertices = new VertexPositionTextureNormal[]
     {
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
         new(new( 0.5f, -0.5f, -0.5f),  new( 1.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
         new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
-        new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
-        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f, -1.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  0.0f, -1.0f)),
+        
         new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
         new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
         new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
         new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
         new(new(-0.5f,  0.5f,  0.5f),  new( 0.0f, 1.0f), new( 0.0f,  0.0f,  1.0f)),
         new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  0.0f,  1.0f)),
+        
         new(new(-0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
         new(new(-0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new(-1.0f,  0.0f,  0.0f)),
         new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
         new(new(-0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new(-1.0f,  0.0f,  0.0f)),
+        
         new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
         new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
         new(new( 0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 1.0f,  0.0f,  0.0f)),
-        new(new( 0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
         new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        new(new( 0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 1.0f,  0.0f,  0.0f)),
+        
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
         new(new( 0.5f, -0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
         new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
         new(new( 0.5f, -0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
         new(new(-0.5f, -0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f, -1.0f,  0.0f)),
         new(new(-0.5f, -0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f, -1.0f,  0.0f)),
+        
         new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
         new(new( 0.5f,  0.5f, -0.5f),  new( 1.0f, 1.0f), new( 0.0f,  1.0f,  0.0f)),
         new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
-        new(new( 0.5f,  0.5f,  0.5f),  new( 1.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
+        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f)),
         new(new(-0.5f,  0.5f,  0.5f),  new( 0.0f, 0.0f), new( 0.0f,  1.0f,  0.0f)),
-        new(new(-0.5f,  0.5f, -0.5f),  new( 0.0f, 1.0f), new( 0.0f,  1.0f,  0.0f))
     };
 
     VertexPositionTextureNormalTangent[] planeVertices = new VertexPositionTextureNormalTangent[]
     {
         new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
         new(new( 0.5f,  0f, -0.5f),  new(1.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        
         new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
-        new(new( 0.5f,  0f,  0.5f),  new(1.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
+        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
         new(new(-0.5f,  0f,  0.5f),  new(0.0f, 0.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f)),
-        new(new(-0.5f,  0f, -0.5f),  new(0.0f, 1.0f), new(0.0f,  1.0f,  0.0f), new(1.0f, 0.0f, 0.0f), new(0.0f, 0.0f, 1.0f))
     };
 
     Vector3[] positions = new Vector3[]
@@ -105,6 +114,23 @@ class Window : GameWindow
 
     Vector3 cubePosition = new Vector3(0, 1, 0);
 
+    VertexPositionTexture[] GetFullScreenQuad()
+    {
+        return new VertexPositionTexture[]
+        {
+            new(new(-1, -1f,  0f),  new(0.0f, 0.0f)),
+            new(new( 1, -1f,  0f),  new(1.0f, 0.0f)),
+            new(new( 1,  1f,  0f),  new(1.0f, 1.0f)),
+            new(new( 1,  1f,  0f),  new(1.0f, 1.0f)),
+            new(new(-1,  1f,  0f),  new(0.0f, 1.0f)),
+            new(new(-1, -1f,  0f),  new(0.0f, 0.0f)),
+        };
+    }
+
+    int shadowFBO, shadowDepthMap;
+    int depthMapSize = 1024*8;
+    bool showShadowMap;
+    
     protected override void OnLoad()
     {
         imGuiController = new(this);
@@ -115,6 +141,33 @@ class Window : GameWindow
 
         lampShader = new("Shaders/Vertex/VertexPosition.glsl", "Shaders/lamp.glsl");
         litShader = new("Shaders/Vertex/VertexPositionTextureNormalTangent.glsl", "Shaders/lit.glsl");
+        depthShader = new("Shaders/Depth/DepthVS.glsl", "Shaders/Depth/DepthFS.glsl");
+        quadShader = new("Shaders/Vertex/VertexPositionTexture.glsl", "Shaders/textured.glsl");
+
+        shadowFBO = GL.GenFramebuffer();
+
+        shadowDepthMap = GL.GenTexture();
+
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, shadowFBO);
+        
+        GL.BindTexture(TextureTarget.Texture2D, shadowDepthMap);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, depthMapSize, depthMapSize, 0, PixelFormat.DepthComponent, PixelType.Float, 0);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, shadowDepthMap, 0);
+
+        GL.DrawBuffer(DrawBufferMode.None);
+        GL.ReadBuffer(ReadBufferMode.None);
+
+        var s = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+        if (s != FramebufferErrorCode.FramebufferComplete)
+        {
+            throw new Exception();
+        }
+
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
         // vao = GL.GenVertexArray();
         // GL.BindVertexArray(vao);
@@ -146,9 +199,9 @@ class Window : GameWindow
 
         cube = new(cubeVertices, null, new[] { container2, container2Specular });
         planeMesh = new(planeVertices, null, new[] { brickwall, brickwallNormal, Texture.SpecularAlways });
-        backpack = new("Assets/backpack/backpack.obj");
+        quad = new(GetFullScreenQuad(), null, new[] { new Texture(TextureKind.Diffuse, shadowDepthMap) });
+        // backpack = new("Assets/backpack/backpack.obj");
         sponza = new Model("Assets/sponza/sponza.gltf");
-
 
         xr = 0;
         yr = MathF.PI;
@@ -167,102 +220,95 @@ class Window : GameWindow
             light.quadratic = 0.032f;
         }
 
-        pointLights[0] = new()
+        //pointLights[0] = new()
+        //{
+        //    position = new(0, 0, 1),
+        //    constant = 1.0f,
+        //    linear = 0.09f,
+        //    quadratic = 0.032f,
+        //    color = new()
+        //    {
+        //        ambient = new(0.2f, 0.2f, 0.2f),
+        //        diffuse = new(0.8f, 0.8f, 0.8f),
+        //        specular = new(0.5f, 0.5f, 0.5f)
+        //    },
+        //};
+
+        directionalLight.color = new()
         {
-            position = new(0, 0, 1),
-            constant = 1.0f,
-            linear = 0.09f,
-            quadratic = 0.032f,
-            color = new()
-            {
-                ambient = new(0.2f, 0.2f, 0.2f),
-                diffuse = new(0.8f, 0.8f, 0.8f),
-                specular = new(0.5f, 0.5f, 0.5f)
-            },
+            ambient = new(0.2f, 0.2f, 0.2f),
+            diffuse = new(0.8f, 0.8f, 0.8f),
+            specular = new(0.5f, 0.5f, 0.5f)
         };
 
         base.OnLoad();
     }
 
+    Vector2 orthosize = new Vector2(20);
+    Vector3 pos = new Vector3(-2.0f, 4.0f, -1.0f);
+    float near = 1, far = 7.5f;
+    float depthBias;
+
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         t += (float)args.Time;
         imGuiController.Update(this, (float)args.Time);
+        Layout();
 
         HandleInput((float)args.Time);
 
+        GL.Enable(EnableCap.CullFace);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
+
+        // render to depth map
+        GL.CullFace(CullFaceMode.Front);
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, shadowFBO);
+        GL.Viewport(0, 0, depthMapSize, depthMapSize);
+        GL.ClearColor(new Color4(.1f, .1f, .12f, 1f));
+        GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
+        
+        Matrix4 lightProjection = Matrix4.CreateOrthographic(orthosize.X, orthosize.Y, near, far);
+        Matrix4 lightView = Matrix4.LookAt(pos, Vector3.Zero, Vector3.UnitY);
+
+        Matrix4 lightSpaceMatrix = lightView * lightProjection;
+        directionalLight.direction = -pos.Normalized();
+        depthShader.Use();
+        depthShader.SetMatrix("lightSpaceMatrix", lightSpaceMatrix);
+        RenderScene(depthShader);
+
+        // render main scene
+        GL.CullFace(CullFaceMode.Back);
+        GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.FramebufferSrgb);
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
         GL.ClearColor(new Color4(.1f, .1f, .12f, 1f));
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        Layout();
+        if (showShadowMap)
+        {
+            quadShader.Use();
+            quadShader.SetMatrix("model", Matrix4.CreateScale(ClientSize.Y / (float)ClientSize.X, 1, 1));
+            quadShader.SetMatrix("view", Matrix4.Identity);
+            quadShader.SetMatrix("proj", Matrix4.Identity);
+            quad.Draw(quadShader);
+        }
 
         var viewRotMatrix = Matrix3.CreateRotationY(yr) * Matrix3.CreateRotationX(xr);
-
         Matrix4 view = Matrix4.LookAt(cameraPosition, cameraPosition + viewRotMatrix * Vector3.UnitZ, Vector3.UnitY);
         Matrix4 proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(zoom), ClientSize.X / (float)ClientSize.Y, .1f, 100f);
 
-        // GL.BindVertexArray(vao);
         litShader.Use();
-
         litShader.SetMatrix("view", view);
         litShader.SetMatrix("proj", proj);
-        litShader.SetFloat("time", t);
-        litShader.SetVector("uvScale", Vector2.One);
-        litShader.SetVector("viewPos", cameraPosition);
-        litShader.SetBool("renderNormals", renderNormals);
-
-        directionalLight.Apply(litShader, "directionalLight");
-        
-        for (int i = 0; i < pointLights.Length; i++)
-        {
-            var light = pointLights[i];
-            light.Apply(litShader, $"pointLights[{i}]");
-        }
-
-        for (int i = 0; i < spotLights.Length; i++)
-        {
-            var light = spotLights[i];
-            light.Apply(litShader, $"spotLights[{i}]");
-        }
-
-        for (int i = 0; i < positions.Length; i++)
-        {
-            Matrix4 translation = Matrix4.CreateTranslation(positions[i]);
-            float angle = 20 * (i + r + (i % 3 is 0 ? t : 0));
-            Matrix4 rotation = Matrix4.CreateFromAxisAngle(new(1, .3f, .5f), MathHelper.DegreesToRadians(angle));
-            litShader.SetMatrix("model", rotation * translation);
-            //cubeMesh.Draw(litShader);
-        }
-
-        litShader.SetMatrix("model", Matrix4.CreateTranslation(cubePosition));
-        backpack.Draw(litShader);
-
-        litShader.SetMatrix("model", Matrix4.CreateRotationX(MathHelper.DegreesToRadians(90)) * Matrix4.CreateRotationY(r) * Matrix4.CreateTranslation(0,1,0));
-        planeMesh.Draw(litShader);
-
-        litShader.SetMatrix("model", Matrix4.CreateScale(.025f) * Matrix4.CreateTranslation(0,0,0));
-        sponza.Draw(litShader);
-
-        //backpack.Draw(litShader);
-
-        litShader.SetMatrix("model", Matrix4.CreateScale(100) * Matrix4.CreateTranslation(0,-5,0));
-        litShader.SetVector("uvScale", new Vector2(20));
-        //planeMesh.Draw(litShader);
-
-        lampShader.Use();
-        lampShader.SetMatrix("view", view);
-        lampShader.SetMatrix("proj", proj);
-
-        foreach (var light in pointLights)
-        {
-            lampShader.SetMatrix("model", Matrix4.CreateTranslation(new(light.position)));
-            lampShader.SetVector("lightColor", light.color.diffuse + light.color.ambient);
-            //cubeMesh.Draw(lampShader);
-        }
+        litShader.SetMatrix("lightSpaceMatrix", lightSpaceMatrix);
+        litShader.SetTexture("depthMap", shadowDepthMap, 8);
+        litShader.SetFloat("depthBias", depthBias);
+        RenderScene(litShader);
+        //litShader.SetMatrix("model", Matrix4.CreateTranslation(pos));
+        //cube.Draw(litShader);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.Multisample);
@@ -272,6 +318,36 @@ class Window : GameWindow
         SwapBuffers();
 
         base.OnRenderFrame(args);
+    }
+
+    void RenderScene(Shader shader)
+    {
+        shader.Use();
+
+        shader.SetFloat("time", t);
+        shader.SetVector("uvScale", Vector2.One);
+        shader.SetVector("viewPos", cameraPosition);
+        shader.SetBool("renderNormals", renderNormals);
+
+        directionalLight.Apply(shader, "directionalLight");
+
+        for (int i = 0; i < pointLights.Length; i++)
+        {
+            var light = pointLights[i];
+            light.Apply(shader, $"pointLights[{i}]");
+        }
+
+        for (int i = 0; i < spotLights.Length; i++)
+        {
+            var light = spotLights[i];
+            light.Apply(shader, $"spotLights[{i}]");
+        }
+
+        shader.SetMatrix("model", Matrix4.CreateScale(.025f) * Matrix4.CreateTranslation(cubePosition));
+        sponza.Draw(shader);
+
+        shader.SetMatrix("model", Matrix4.CreateScale(15f) * Matrix4.CreateTranslation(0, 0, 0));
+        planeMesh.Draw(shader);
     }
 
     private void HandleInput(float dt)
@@ -319,19 +395,33 @@ class Window : GameWindow
 
         if (imguiWindowOpen && ImGui.Begin("debug", ref imguiWindowOpen))
         {
-            ImGui.DragFloat3("cube position", ref cubePosition.ImGui());
-
-            if (ImGui.Button("recompile shaders"))
-            {
-                litShader?.Dispose();
-                litShader = new("Shaders/Vertex/VertexPositionTextureNormalTangent.glsl", "Shaders/lit.glsl");
-            }
+            //if (ImGui.Button("recompile shaders"))
+            //{
+            //    litShader?.Dispose();
+            //    litShader = new("Shaders/Vertex/VertexPositionTextureNormalTangent.glsl", "Shaders/lit.glsl");
+            //}
 
             ImGui.Checkbox("render normals", ref renderNormals);
+            ImGui.Checkbox("show shadow depth map", ref showShadowMap);
+
+            ImGui.DragFloat("depth bias", ref depthBias);
             ImGui.DragFloat("r", ref r);
+
+            ImGui.DragFloat("near", ref near);
+            near = MathF.Max(near, 0.001f);
+            ImGui.DragFloat("far", ref far);
+            ImGui.DragFloat2("orthosize", ref orthosize.ImGui());
+            ImGui.DragFloat3("light pos", ref pos.ImGui());
+            ImGui.DragFloat3("cube pos", ref cubePosition.ImGui());
 
             if (ImGui.BeginTabBar("tab bar"))
             {
+                if (ImGui.BeginTabItem("shadow map"))
+                {
+                    ImGui.Image(shadowDepthMap, new(500, 500));
+                    ImGui.EndTabItem();
+                }
+
                 if (ImGui.BeginTabItem("directional light"))
                 {
                     if (ImGui.CollapsingHeader("directional light"))
@@ -375,17 +465,17 @@ class Window : GameWindow
 
                 if (ImGui.BeginTabItem("sponza"))
                 {
-                    sponza.Layout();
+                    sponza?.Layout();
                 }
 
                 if (ImGui.BeginTabItem("brick wall"))
                 {
-                    planeMesh.Layout();
+                    planeMesh?.Layout();
                 }
 
                 if (ImGui.BeginTabItem("backpack"))
                 {
-                    backpack.Layout();
+                    backpack?.Layout();
                 }
 
                 ImGui.EndTabBar();
@@ -395,7 +485,7 @@ class Window : GameWindow
 
     protected override void OnUnload()
     {
-        cubeMesh?.Dispose();
+        cube?.Dispose();
         lampShader?.Dispose();
         litShader?.Dispose();
 
@@ -406,14 +496,12 @@ class Window : GameWindow
 
     protected override void OnResize(ResizeEventArgs e)
     {
-        GL.Viewport(0, 0, e.Width, e.Height);
-
         base.OnResize(e);
     }
 
     private unsafe void DebugMessage(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, nint message, nint userParam)
     {
-        if (severity is not DebugSeverity.DebugSeverityHigh)
+        if (severity is DebugSeverity.DebugSeverityNotification)
             return;
 
         var msg = new string((sbyte*)message, 0, length);
@@ -426,7 +514,6 @@ class Window : GameWindow
         settings.Flags |= ContextFlags.Debug;
         settings.APIVersion = new(4, 1);
         settings.NumberOfSamples = 16;
-        settings.Profile = ContextProfile.Compatability;
         return settings;
     }
 

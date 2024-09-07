@@ -39,6 +39,13 @@ internal class Texture : IDisposable
         this.TextureID = Initialize(image);
     }
 
+    public Texture(TextureKind kind, int texture)
+    {
+        this.Kind = kind;
+        this.TextureID = texture;
+        this.Path = null;
+    }
+
     public static Texture Load(TextureKind kind, string? path)
     {
         path ??= string.Empty;

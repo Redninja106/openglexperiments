@@ -6,6 +6,11 @@ namespace ConsoleApp21;
 
 static class Extensions
 {
+    public static ref System.Numerics.Vector2 ImGui(ref this Vector2 vector)
+    {
+        return ref Unsafe.As<Vector2, System.Numerics.Vector2>(ref vector);
+    }
+
     public static ref System.Numerics.Vector3 ImGui(ref this Vector3 vector)
     {
         return ref Unsafe.As<Vector3, System.Numerics.Vector3>(ref vector);
@@ -24,5 +29,10 @@ static class Extensions
     public static Vector3 AsVector3(this Color3D vector)
     {
         return new(vector.R, vector.G, vector.B);
+    }
+
+    public static ref System.Numerics.Matrix4x4 ImGui(ref this Matrix4 matrix)
+    {
+        return ref Unsafe.As<Matrix4, System.Numerics.Matrix4x4>(ref matrix);
     }
 }

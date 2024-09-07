@@ -46,6 +46,7 @@ in vec3 Position;
 in vec2 TexCoords;
 in vec3 Normal;
 in mat3 TangentSpaceMatrix;
+in vec4 PositionLightSpace;
 
 uniform DirectionalLight directionalLight;
 
@@ -55,44 +56,39 @@ uniform PointLight pointLights[POINT_LIGHT_COUNT];
 const int SPOT_LIGHT_COUNT = 8;
 uniform SpotLight spotLights[SPOT_LIGHT_COUNT];
 
+uniform sampler2D depthMap;
+
 uniform Material material;
 uniform float time;
 uniform vec2 uvScale;
 uniform vec3 viewPos;
 uniform bool renderNormals;
+uniform float depthBias;
+uniform bool normalMappingEnable;
 
 vec3 directionalLightBrightness(DirectionalLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
 vec3 pointLightBrightness(PointLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
 vec3 spotLightBrightness(SpotLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
-vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 matDiffuse, vec3 matSpecular);
+vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 matDiffuse, vec3 matSpecular, float shadow = 0);
+float calcShadow(vec4 fragPos);
 
 void main()
 {
-	vec3 normal = vec3(texture(material.normalMap0, TexCoords * uvScale));
-	normal = (normal * 2) - vec3(1);
-
-	// vec3 tangent = TangentSpaceMatrix[0];
-	// vec3 bitangent = TangentSpaceMatrix[1];
-	// vec3 calculatedNormal = cross(tangent, bitangent);
-	// 
-	// float alignment = dot(calculatedNormal, TangentSpaceMatrix[2]);
-	normal = normalize(TangentSpaceMatrix * normal);
-//	if (alignment < 0)
-//	{
-//		mat3 corrected = TangentSpaceMatrix;
-//		corrected[0] = -tangent;
-//		normal = normalize(corrected * normal);
-//	}
-//	else
-//	{
-//	normal = normalize(TangentSpaceMatrix * normal);
-//	}
-
-	if (normal == vec3(0))
+	vec3 normal;
+	
+	if (!normalMappingEnable)
 	{
 		// use vertex normal
-		normal = normalize(Normal);
+		normal = Normal;
 	}
+	else
+	{
+	    normal =  vec3(texture(material.normalMap0, TexCoords * uvScale));
+		normal = (normal * 2) - vec3(1);
+		normal = TangentSpaceMatrix * normal;
+	}
+
+	normal = normalize(normal);
 
 	if (renderNormals)
 	{
@@ -126,7 +122,7 @@ vec3 directionalLightBrightness(DirectionalLight light, vec3 normal, vec3 matDif
 {
 	vec3 lightDirection = normalize(-light.direction);
 
-	return lightBrightness(light.color, lightDirection, normal, matDiffuse, matSpecular);
+	return lightBrightness(light.color, lightDirection, normal, matDiffuse, matSpecular, calcShadow(PositionLightSpace));
 }
 
 vec3 pointLightBrightness(PointLight light, vec3 normal, vec3 matDiffuse, vec3 matSpecular)
@@ -151,7 +147,7 @@ vec3 spotLightBrightness(SpotLight light, vec3 normal, vec3 matDiffuse, vec3 mat
 	return pointLightBrightness(light.pointLight, normal, matDiffuse, matSpecular) * intensity;
 }
 
-vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 matDiffuse, vec3 matSpecular)
+vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 matDiffuse, vec3 matSpecular, float shadow = 0)
 {
 	vec3 viewDirection = normalize(viewPos - Position);
 	vec3 reflectDirection = reflect(-lightDirection, normal);
@@ -160,8 +156,20 @@ vec3 lightBrightness(LightColor color, vec3 lightDirection, vec3 normal, vec3 ma
 	float specularBrightness = pow(max(dot(normal, halfwayDirection), 0), 128);
 	float diffuseBrightness = max(dot(normal, lightDirection), 0);
 	
+	float shadowScalar = (1 - shadow);
+
 	vec3 ambient = color.ambient * matDiffuse;
 	vec3 diffuse = color.diffuse * diffuseBrightness * matDiffuse;
 	vec3 specular = color.specular * specularBrightness * matSpecular;
-	return (ambient + diffuse + specular);
+	return (ambient + (diffuse * shadowScalar) + (specular * shadowScalar));
+}
+
+float calcShadow(vec4 fragPos)
+{
+	vec3 projCoords = fragPos.xyz / fragPos.w;
+	projCoords = projCoords * .5 + .5;
+
+	float closestDepth = texture(depthMap, projCoords.xy).r;
+	float currentDepth = projCoords.z;
+	return (currentDepth - depthBias) > closestDepth ? 1 : 0;
 }

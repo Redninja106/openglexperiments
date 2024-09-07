@@ -9,22 +9,24 @@ out vec3 Position;
 out vec2 TexCoords;
 out vec3 Normal;
 out mat3 TangentSpaceMatrix;
+out vec4 PositionLightSpace;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
-	gl_Position = proj * view * model * vec4(vertexPosition, 1);
+	gl_Position = ((proj * view) * model) * vec4(vertexPosition, 1);
 	Position = vec3(model * vec4(vertexPosition, 1));
 	TexCoords = vertexTexCoords;
 	
 	mat3 normalMatrix = mat3(transpose(inverse(model)));
 	
-	Normal = normalize(vec3(model * vec4(vertexNormal, 0)));
-	vec3 tangent = normalize(vec3(model * vec4(vertexTangent, 0)));
-	vec3 bitangent = normalize(vec3(model * vec4(vertexBitangent, 0))); // cross(tangent, Normal);
+	Normal = normalize(normalMatrix * vertexNormal);
+	vec3 tangent = normalize(normalMatrix * vertexTangent);
+	vec3 bitangent = normalize(normalMatrix * vertexBitangent); // cross(tangent, Normal);
 	//vec3 normal = normalize(vertexNormal);
     //vec3 tangent = normalize(vertexNormal);
 
@@ -39,4 +41,6 @@ void main()
 	}
 
 	TangentSpaceMatrix = mat3(tangent, bitangent, Normal);
+
+	PositionLightSpace = lightSpaceMatrix * vec4(Position, 1);
 }
